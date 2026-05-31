@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minefront — Bedrock Tier Testing</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#C0392B;--red-bright:#E74C3C;--red-glow:#ff4433;
+  --gold:#F0A500;--gold-bright:#FFD166;
+  --bg:#06030A;--bg2:#100508;--bg3:#1a0a0c;
+  --surface:rgba(18,5,8,0.95);
+  --border:rgba(192,57,43,0.22);--border-bright:rgba(231,76,60,0.5);
+  --text:#e8d8d5;--text-dim:#8a7070;--text-muted:#3a2a2a;
+  --orb:'Orbitron',sans-serif;--mono:'Share Tech Mono',monospace;--body:'Rajdhani',sans-serif;
+  --mythic-a:#bf5fff;--mythic-b:#ff5fcb;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;overflow-x:hidden;}
+
+/* CURSOR */
+*{cursor:none!important;}
+#cur-o{position:fixed;width:32px;height:32px;border:2px solid rgba(192,57,43,0.7);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .25s,height .25s,border-color .25s,background .25s;}
+#cur-i{position:fixed;width:5px;height:5px;background:var(--red-bright);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .12s,height .12s,background .2s;}
+body.ch #cur-o{width:50px;height:50px;border-color:var(--gold);background:rgba(240,165,0,0.06);}
+body.ch #cur-i{width:9px;height:9px;background:var(--gold);}
+body.cc #cur-o{width:18px;height:18px;border-color:#fff;}
+
+/* BG */
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(192,57,43,0.14),transparent),
+             radial-gradient(ellipse 50% 40% at 90% 90%,rgba(150,20,20,0.07),transparent);
+  pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(192,57,43,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(192,57,43,0.035) 1px,transparent 1px);
+  background-size:40px 40px;animation:gridD 25s linear infinite;pointer-events:none;z-index:0;}
+@keyframes gridD{from{background-position:0 0}to{background-position:40px 40px}}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;}
+section,header,footer,nav,.overlay-modal{position:relative;z-index:1;}
+
+/* SCROLL BTN */
+#scroll-btn{position:fixed;right:22px;bottom:36px;z-index:9000;width:46px;height:46px;
+  background:rgba(8,2,4,0.97);border:2px solid rgba(192,57,43,0.4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:pointer!important;transition:all .3s;opacity:0;pointer-events:none;}
+#scroll-btn.vis{opacity:1;pointer-events:auto;}
+#scroll-btn:hover{border-color:var(--red-bright);box-shadow:0 0 20px rgba(231,76,60,0.4);}
+#scroll-btn .arr{width:11px;height:5px;border-left:2px solid var(--red-bright);border-bottom:2px solid var(--red-bright);transform:rotate(-45deg);animation:aF 1.1s ease-in-out infinite;}
+#scroll-btn .arr:nth-child(2){animation-delay:.18s;opacity:.5;}
+#scroll-btn .arr:nth-child(3){animation-delay:.36s;opacity:.25;}
+#scroll-btn .s-lbl{font-family:var(--mono);font-size:.24rem;color:rgba(231,76,60,0.5);letter-spacing:1px;}
+@keyframes aF{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* NAME PROMPT OVERLAY */
+#name-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:200000;
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  backdrop-filter:blur(20px);}
+.name-box{
+  background:#0e0408;border:2px solid var(--red);max-width:420px;width:100%;
+  padding:2.5rem 2rem;text-align:center;position:relative;
+  box-shadow:0 0 60px rgba(192,57,43,0.3);
+}
+.name-box::before,.name-box::after{content:'';position:absolute;width:16px;height:16px;border:2px solid var(--red-bright);}
+.name-box::before{top:-2px;left:-2px;border-right:none;border-bottom:none;}
+.name-box::after{bottom:-2px;right:-2px;border-left:none;border-top:none;}
+.name-logo{font-family:var(--orb);font-size:1.4rem;font-weight:900;letter-spacing:4px;color:var(--red-bright);margin-bottom:.3rem;text-shadow:0 0 20px rgba(231,76,60,0.5);}
+.name-sub{font-family:var(--mono);font-size:.65rem;color:var(--text-dim);letter-spacing:3px;margin-bottom:2rem;}
+.name-prompt{font-family:var(--orb);font-size:.7rem;color:var(--text);letter-spacing:2px;margin-bottom:1rem;}
+.name-input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border-bright);
+  color:var(--text);font-family:var(--body);font-size:1.1rem;padding:.7rem 1rem;
+  outline:none;text-align:center;letter-spacing:2px;transition:border-color .2s;}
+.name-input:focus{border-color:var(--red-bright);}
+.name-enter-btn{margin-top:1rem;width:100%;background:var(--red);color:#fff;border:none;
+  font-family:var(--orb);font-size:.62rem;font-weight:700;letter-spacing:3px;padding:.9rem;
+  cursor:pointer!important;transition:background .2s,box-shadow .2s;}
+.name-enter-btn:hover{background:var(--red-bright);box-shadow:0 0 24px rgba(231,76,60,0.4);}
+.name-err{color:var(--red-bright);font-family:var(--mono);font-size:.55rem;letter-spacing:1px;margin-top:.6rem;min-height:16px;}
+
+/* VISITOR BANNER */
+#visitor-bar{
+  background:rgba(192,57,43,0.08);border-bottom:1px solid rgba(192,57,43,0.18);
+  padding:.4rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+  font-family:var(--mono);font-size:.62rem;color:var(--text-dim);position:relative;z-index:10;
+}
+.vbar-left{display:flex;align-items:center;gap:10px;}
+.vbar-name{color:var(--red-bright);font-weight:700;letter-spacing:1px;}
+.vbar-tag{background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.3);padding:1px 8px;color:var(--red);}
+.vbar-right{display:flex;align-items:center;gap:12px;}
+.vbar-change{color:var(--text-muted);cursor:pointer!important;transition:color .2s;}
+.vbar-change:hover{color:var(--red-bright);}
+.vbar-online-wrap{display:flex;align-items:center;gap:5px;}
+.vbar-dot{width:6px;height:6px;border-radius:50%;background:#00cc44;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,204,68,.5)}50%{box-shadow:0 0 0 5px rgba(0,204,68,0)}}
+
+/* HEADER */
+header{background:linear-gradient(180deg,#030104 0%,#0b0306 50%,#140508 100%);
+  border-bottom:3px solid var(--red);text-align:center;padding:4.5rem 1rem 3.5rem;
+  overflow:hidden;position:relative;}
+header::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 100%,rgba(192,57,43,0.2),transparent);pointer-events:none;}
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:5px;
+  background:repeating-linear-gradient(90deg,var(--red) 0,var(--red) 28px,#6b1208 28px,#6b1208 34px,var(--red) 34px,var(--red) 56px,#8b1c10 56px,#8b1c10 62px);}
+.heyebrow{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:5px;
+  color:rgba(231,76,60,0.55);margin-bottom:1.2rem;border:1px solid rgba(192,57,43,0.28);padding:3px 18px;
+  animation:fadeUp .8s ease .1s both;}
+.logo-main{font-family:var(--orb);font-size:clamp(2rem,7vw,4.5rem);font-weight:900;letter-spacing:8px;
+  color:#fff;position:relative;display:inline-block;
+  text-shadow:0 0 40px rgba(231,76,60,0.6),0 0 80px rgba(192,57,43,0.25);
+  animation:fadeUp .8s cubic-bezier(.22,1,.36,1) .3s both;}
+.logo-main span{color:var(--red-bright);}
+.logo-main::before,.logo-main::after{content:attr(data-text);position:absolute;inset:0;
+  font-family:var(--orb);font-size:inherit;font-weight:inherit;letter-spacing:inherit;}
+.logo-main::before{color:rgba(255,100,50,.6);clip-path:polygon(0 25%,100% 25%,100% 45%,0 45%);animation:gA 7s infinite;text-shadow:none;}
+.logo-main::after{color:rgba(200,30,30,.5);clip-path:polygon(0 60%,100% 60%,100% 78%,0 78%);animation:gB 7s infinite;text-shadow:none;}
+@keyframes gA{0%,93%,100%{opacity:0}94%{opacity:.9;transform:translate(-3px,0)}96%{transform:translate(3px,0)}}
+@keyframes gB{0%,95%,100%{opacity:0}96%{opacity:.8;transform:translate(3px,0)}98%{transform:translate(-3px,0)}}
+.logo-tag{font-family:var(--mono);font-size:.88rem;color:var(--text-dim);letter-spacing:5px;margin:.6rem 0 2rem;animation:fadeUp .8s ease .5s both;}
+.hbadges{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;animation:fadeUp .8s ease .7s both;}
+.hbadge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.7rem;letter-spacing:2px;
+  padding:5px 14px;border:1px solid rgba(255,255,255,.08);color:var(--text-dim);background:rgba(255,255,255,.02);}
+.hbadge.live{border-color:rgba(231,76,60,.4);color:var(--red-bright);}
+.hbdot{width:6px;height:6px;border-radius:50%;background:var(--red-bright);animation:pulse 2s infinite;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* NAV */
+nav{background:rgba(4,1,2,0.94);border-bottom:1px solid rgba(192,57,43,0.18);
+  padding:.65rem 1rem;display:flex;justify-content:center;gap:1.8rem;flex-wrap:wrap;
+  backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+nav a{font-family:var(--orb);font-size:.5rem;font-weight:700;color:var(--text-muted);
+  text-decoration:none;letter-spacing:2px;padding:4px 2px;position:relative;transition:color .25s;}
+nav a::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;
+  background:var(--red-bright);transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.22,1,.36,1);}
+nav a:hover,nav a.active{color:var(--red-bright);}
+nav a:hover::after,nav a.active::after{transform:scaleX(1);}
+.nav-cta{color:var(--gold)!important;border:1px solid rgba(240,165,0,0.3)!important;padding:4px 14px!important;
+  background:rgba(240,165,0,0.05)!important;transition:all .25s!important;}
+.nav-cta::after{background:var(--gold)!important;}
+.nav-cta:hover{color:#000!important;background:var(--gold)!important;border-color:var(--gold)!important;box-shadow:0 0 18px rgba(240,165,0,0.4)!important;}
+
+/* SECTION COMMON */
+.sec-eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:4px;text-align:center;margin-bottom:.4rem;color:var(--red);}
+.sec-title{font-family:var(--orb);font-weight:900;font-size:clamp(1rem,3vw,1.6rem);text-align:center;letter-spacing:3px;margin-bottom:.4rem;}
+.sec-line{width:60px;height:3px;margin:0 auto 3rem;background:linear-gradient(90deg,transparent,var(--red-bright),transparent);position:relative;}
+.sec-line::before,.sec-line::after{content:'';position:absolute;top:0;width:5px;height:3px;background:var(--red);}
+.sec-line::before{left:-5px;} .sec-line::after{right:-5px;}
+
+/* ABOUT */
+.about{max-width:780px;margin:5rem auto;padding:0 1.5rem;text-align:center;}
+.about-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);
+  padding:2rem 2.5rem;font-size:1.05rem;line-height:1.9;color:var(--text-dim);position:relative;overflow:hidden;}
+.about-card::before{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(192,57,43,0.05),transparent);animation:shimmer 4s ease-in-out infinite;}
+@keyframes shimmer{0%{left:-100%}100%{left:200%}}
+.about-card strong{color:var(--text);}
+
+/* PROGRESS STRIP */
+.tier-progress{max-width:960px;margin:0 auto 3rem;padding:0 1.5rem;}
+.progress-bar{display:flex;overflow:hidden;border:1px solid rgba(255,255,255,.04);}
+.progress-step{flex:1;text-align:center;padding:.5rem .15rem;font-family:var(--mono);font-size:.33rem;letter-spacing:1px;
+  position:relative;transition:filter .3s;cursor:pointer!important;}
+.progress-step::after{content:'▶';position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:.65rem;z-index:2;}
+.progress-step:last-child::after{display:none;}
+.progress-step:hover{filter:brightness(1.7);}
+.ps-r{background:#0d0808;color:#555;} .ps-f{background:#080f18;color:#4a90d9;}
+.ps-w{background:#0a0f14;color:#9ab0c8;} .ps-e{background:#110800;color:#FF8C00;}
+.ps-l{background:#001212;color:#00ECEC;} .ps-m{background:linear-gradient(90deg,#0e0018,#180010);color:#bf5fff;}
+
+/* TIERS */
+.tiers-section{padding:3rem 1.5rem 5rem;max-width:1200px;margin:0 auto;}
+.tiers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1.3rem;margin-top:1rem;}
+.tier-card{background:rgba(6,2,4,0.94);border:1px solid rgba(255,255,255,.07);text-align:center;
+  position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s;cursor:pointer!important;}
+.tier-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.tier-card:hover{transform:translateY(-8px) scale(1.02);} .tier-card:hover::before{opacity:1;}
+.tier-card::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);pointer-events:none;}
+.tier-card:hover::after{left:200%;transition:left .5s ease;}
+.tier-header{padding:1.4rem 1rem 1rem;position:relative;}
+.tier-icon{font-size:2.8rem;display:block;margin-bottom:.7rem;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.tier-card:nth-child(2) .tier-icon{animation-delay:.5s;} .tier-card:nth-child(3) .tier-icon{animation-delay:1s;}
+.tier-card:nth-child(4) .tier-icon{animation-delay:1.5s;} .tier-card:nth-child(5) .tier-icon{animation-delay:2s;}
+.tier-card:nth-child(6) .tier-icon{animation-delay:2.5s;}
+.tier-name{font-family:var(--orb);font-size:.56rem;font-weight:700;letter-spacing:2px;margin-bottom:.3rem;}
+.tier-number{font-family:var(--mono);font-size:.82rem;opacity:.45;letter-spacing:2px;margin-bottom:.65rem;}
+.tier-body{padding:.9rem 1rem 1.2rem;border-top:1px solid rgba(255,255,255,.04);}
+.tier-desc{font-size:.88rem;line-height:1.65;color:var(--text-muted);margin-bottom:.9rem;}
+.tier-perk{display:inline-block;padding:2px 9px;border:1px solid;letter-spacing:1px;font-family:var(--mono);font-size:.86rem;}
+.tier-click-hint{font-family:var(--mono);font-size:.28rem;color:rgba(255,255,255,.2);margin-top:.5rem;letter-spacing:1px;}
+.tier-recruit{border-color:#3a3030;} .tier-recruit .tier-header{background:linear-gradient(135deg,#0f0808,#1a1212);}
+.tier-recruit .tier-name{color:#776060;} .tier-recruit .tier-perk{color:#665050;border-color:#665050;}
+.tier-recruit:hover{box-shadow:0 14px 44px rgba(120,80,80,.15);}
+.tier-fighter{border-color:#3a6fa0;} .tier-fighter .tier-header{background:linear-gradient(135deg,#060e18,#0e1c2e);}
+.tier-fighter .tier-name{color:#4a90d9;} .tier-fighter .tier-perk{color:#4a90d9;border-color:#4a90d9;}
+.tier-fighter:hover{box-shadow:0 14px 44px rgba(74,144,217,.22);}
+.tier-warrior{border-color:#607080;} .tier-warrior .tier-header{background:linear-gradient(135deg,#0a1018,#14202c);}
+.tier-warrior .tier-name{color:#a0c0d8;} .tier-warrior .tier-perk{color:#a0b8c8;border-color:#a0b8c8;}
+.tier-warrior:hover{box-shadow:0 14px 44px rgba(160,192,216,.15);}
+.tier-elite{border-color:#bb5500;} .tier-elite .tier-header{background:linear-gradient(135deg,#0f0500,#1e0c00);}
+.tier-elite .tier-name{color:#FF8C00;} .tier-elite .tier-perk{color:#FF8C00;border-color:#FF8C00;}
+.tier-elite:hover{box-shadow:0 14px 44px rgba(255,140,0,.28);}
+.tier-elite .tier-icon{animation:fF 3s ease-in-out 1.5s infinite;}
+@keyframes fF{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+.tier-legend{border-color:#009090;} .tier-legend .tier-header{background:linear-gradient(135deg,#001010,#002020);}
+.tier-legend .tier-name{color:#00ECEC;animation:lG 2s ease-in-out infinite;}
+@keyframes lG{0%,100%{text-shadow:0 0 6px rgba(0,236,236,.4)}50%{text-shadow:0 0 20px rgba(0,236,236,.9),0 0 40px rgba(0,236,236,.4)}}
+.tier-legend .tier-perk{color:#00ECEC;border-color:#00ECEC;} .tier-legend:hover{box-shadow:0 14px 54px rgba(0,236,236,.3);}
+.tier-mythic{border-color:var(--mythic-a);position:relative;}
+.tier-mythic>.mythic-border{content:'';position:absolute;inset:-2px;
+  background:linear-gradient(135deg,var(--mythic-a),var(--mythic-b),#5f5fff,var(--mythic-a));
+  background-size:300% 300%;animation:mBorder 3s linear infinite;z-index:-1;}
+@keyframes mBorder{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.tier-mythic .tier-header{background:linear-gradient(135deg,#0a0018,#180028);}
+.tier-mythic .tier-name{background:linear-gradient(90deg,var(--mythic-a),var(--mythic-b));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:mNG 2s ease-in-out infinite;}
+@keyframes mNG{0%,100%{filter:drop-shadow(0 0 6px rgba(191,95,255,.5))}50%{filter:drop-shadow(0 0 18px rgba(255,95,203,.9))}}
+.tier-mythic .tier-perk{color:var(--mythic-a);border-color:var(--mythic-a);}
+.tier-mythic:hover{box-shadow:0 14px 60px rgba(191,95,255,.45),0 0 36px rgba(255,95,203,.2);}
+.tier-mythic .tier-icon{animation:fM 3s ease-in-out 2.5s infinite;}
+@keyframes fM{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-6px) scale(1.05)}75%{transform:translateY(-3px) scale(.97)}}
+.mythic-crown{position:absolute;top:0;left:50%;transform:translateX(-50%);
+  background:linear-gradient(90deg,var(--mythic-a),var(--mythic-b));
+  font-family:var(--mono);font-size:.3rem;color:#fff;padding:2px 10px;letter-spacing:2px;white-space:nowrap;}
+.mythic-stars{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.mythic-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:sT 2s ease-in-out infinite;}
+@keyframes sT{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.5)}}
+
+/* TIER MODAL */
+#tm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:50000;
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(12px);}
+#tm-overlay.open{opacity:1;pointer-events:all;}
+#tm-box{background:#0c0305;border:1px solid rgba(255,255,255,.08);max-width:520px;width:100%;
+  position:relative;transform:scale(.88) translateY(20px);transition:transform .35s cubic-bezier(.22,1,.36,1);
+  overflow:hidden;max-height:90vh;overflow-y:auto;}
+#tm-overlay.open #tm-box{transform:scale(1) translateY(0);}
+.tm-topbar{height:4px;}
+.tm-header{padding:1.8rem 1.8rem 1rem;display:flex;align-items:center;gap:1.2rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.tm-icon{font-size:3.2rem;flex-shrink:0;animation:float 3s ease-in-out infinite;}
+.tm-label{font-family:var(--mono);font-size:.38rem;color:#444;letter-spacing:2px;margin-bottom:.3rem;}
+.tm-name{font-family:var(--orb);font-size:.82rem;font-weight:700;letter-spacing:2px;}
+.tm-rank{font-family:var(--mono);font-size:1.1rem;color:#444;letter-spacing:3px;margin-top:.2rem;}
+.tm-close{position:absolute;top:1rem;right:1rem;width:28px;height:28px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.5rem;color:#555;
+  cursor:pointer!important;transition:background .2s,color .2s;}
+.tm-close:hover{background:rgba(192,57,43,.2);color:#ff6b6b;}
+.tm-body{padding:1.4rem 1.8rem 1.8rem;}
+.tm-sec{font-family:var(--mono);font-size:.42rem;color:#444;letter-spacing:2px;
+  margin-bottom:.8rem;display:flex;align-items:center;gap:8px;}
+.tm-sec::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.04);}
+.tm-skill-banner{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 1.1rem;border:1px solid;margin-bottom:.2rem;}
+.tm-skill-emoji{font-size:1.9rem;flex-shrink:0;line-height:1;}
+.tm-skill-tag{font-family:var(--mono);font-size:.52rem;letter-spacing:2px;border:1px solid;display:inline-block;padding:2px 8px;margin-bottom:.3rem;}
+.tm-skill-desc{font-size:.87rem;color:#776060;line-height:1.55;}
+.tm-ladder{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:.7rem 1rem;background:rgba(255,255,255,.015);border:1px solid rgba(255,255,255,.05);}
+.tm-dot{width:22px;height:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);transition:transform .2s;}
+.tm-dot.active{transform:scaleY(1.7);} .tm-dot.past{opacity:.45;}
+.tm-ladder-lbl{font-family:var(--mono);font-size:.42rem;letter-spacing:1px;margin-left:4px;}
+.tm-traits{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.3rem;}
+.tm-trait{display:flex;align-items:flex-start;gap:9px;padding:.65rem .9rem;
+  background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.04);border-left:3px solid;
+  transition:background .2s,transform .2s;}
+.tm-trait:hover{background:rgba(255,255,255,.04);transform:translateX(4px);}
+.tm-trait-ic{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.tm-trait-txt{font-size:.9rem;color:#776060;line-height:1.5;} .tm-trait-txt strong{color:#bba0a0;}
+.tm-stats{display:flex;flex-direction:column;gap:.42rem;}
+.tm-stat-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.tm-stat-n{font-family:var(--mono);font-size:.38rem;color:#444;letter-spacing:1px;}
+.tm-stat-v{font-family:var(--mono);font-size:.95rem;letter-spacing:1px;}
+.tm-bar-bg{height:5px;background:rgba(255,255,255,.05);overflow:hidden;}
+.tm-bar-fill{height:100%;width:0%;transition:width .9s cubic-bezier(.22,1,.36,1);}
+.tm-rank-box{background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.05);
+  padding:1rem 1.2rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;margin-top:.2rem;}
+.tm-rank-label{font-family:var(--mono);font-size:.42rem;color:#444;letter-spacing:1px;}
+.tm-rank-val{font-family:var(--orb);font-size:1.9rem;font-weight:900;letter-spacing:3px;}
+.tm-rank-desc{font-size:.86rem;color:#554040;line-height:1.5;}
+
+/* GAME MODES */
+.modes-section{padding:3rem 1.5rem 5rem;max-width:1000px;margin:0 auto;}
+.modes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-top:1rem;}
+.mode-card{background:rgba(6,2,4,0.94);border:1px solid var(--border);padding:1.2rem 1rem;
+  text-align:center;position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .3s;cursor:default;}
+.mode-card:hover{transform:translateY(-5px);border-color:var(--red-bright);box-shadow:0 10px 40px rgba(192,57,43,0.25);}
+.mode-card::before{content:'';position:absolute;top:0;left:-100%;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(192,57,43,0.06),transparent);transition:left 0s;pointer-events:none;}
+.mode-card:hover::before{left:150%;transition:left .5s ease;}
+.mode-icon{font-size:2.5rem;display:block;margin-bottom:.7rem;animation:float 3s ease-in-out infinite;}
+.mode-name{font-family:var(--orb);font-size:.58rem;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:.3rem;}
+.mode-tag{font-family:var(--mono);font-size:.75rem;color:var(--red);letter-spacing:1px;}
+
+/* RULES SECTION */
+.rules-section{padding:5rem 1.5rem;border-top:1px solid rgba(192,57,43,0.12);border-bottom:1px solid rgba(192,57,43,0.12);}
+.rules-wrap{max-width:780px;margin:0 auto;}
+.dc-card{background:#12060a;border:1px solid rgba(255,255,255,.06);border-left:4px solid #5865F2;overflow:hidden;position:relative;}
+.dc-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(88,101,242,.03),transparent 50%);pointer-events:none;}
+.dc-header{display:flex;align-items:center;gap:12px;padding:1.1rem 1.4rem .75rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.dc-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#5865F2,var(--red-bright));
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.65rem;color:#fff;flex-shrink:0;}
+.dc-meta{display:flex;flex-direction:column;gap:2px;}
+.dc-author{font-family:var(--mono);font-size:.55rem;color:#ddd;letter-spacing:1px;display:flex;align-items:center;gap:7px;}
+.dc-tag-bot{background:#5865F2;color:#fff;font-size:.4rem;padding:1px 6px;letter-spacing:1px;font-family:var(--mono);}
+.dc-time{font-size:.8rem;color:#444;}
+.dc-body{padding:1.4rem 1.4rem 1.7rem;}
+.dc-ping{display:inline-block;background:rgba(88,101,242,.15);color:#a5b4fc;padding:4px 13px;font-family:var(--mono);font-size:.46rem;letter-spacing:1px;margin-bottom:1.1rem;border:1px solid rgba(88,101,242,.28);}
+.dc-ann-title{font-family:var(--orb);font-size:.6rem;color:#fff;letter-spacing:1px;margin-bottom:.4rem;}
+.dc-intro{font-size:.93rem;line-height:1.85;color:#887070;margin-bottom:0;} .dc-intro strong{color:#ccc;}
+.dc-div{height:1px;background:rgba(255,255,255,.05);margin:1.3rem 0;}
+.dc-sec{font-family:var(--mono);font-size:.52rem;color:#999;letter-spacing:2px;margin-bottom:.95rem;display:flex;align-items:center;gap:8px;}
+.dc-sec::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.04);}
+.dc-score-row{display:flex;flex-wrap:wrap;gap:.8rem;margin-bottom:.9rem;}
+.dc-score-box{flex:1;min-width:100px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:.85rem;text-align:center;}
+.dc-score-num{display:block;font-family:var(--mono);font-size:1.3rem;color:var(--gold);margin-bottom:4px;}
+.dc-score-lbl{font-size:.76rem;color:#554040;letter-spacing:1px;}
+.dc-warn{background:rgba(255,60,60,.07);border:1px solid rgba(255,80,80,.2);border-left:3px solid #ff4444;
+  padding:9px 14px;font-family:var(--mono);font-size:1.1rem;color:#ffaaaa;letter-spacing:1px;line-height:1.5;}
+.dc-warn strong{color:#ff6b6b;}
+.dc-criteria{display:flex;flex-direction:column;gap:.5rem;}
+.dc-crit{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-left:3px solid rgba(192,57,43,0.4);
+  padding:.8rem 1rem;transition:background .25s,border-left-color .25s,transform .25s;position:relative;overflow:hidden;}
+.dc-crit:hover{background:rgba(255,255,255,.04);border-left-color:var(--red-bright);transform:translateX(4px);}
+.dc-crit-h{display:flex;align-items:center;gap:9px;margin-bottom:5px;}
+.dc-crit-num{width:22px;height:22px;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.28);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.4rem;color:var(--red);flex-shrink:0;}
+.dc-crit-name{font-family:var(--orb);font-size:.54rem;color:#cca0a0;letter-spacing:1px;}
+.dc-list{list-style:none;padding-left:32px;}
+.dc-list li{font-size:.88rem;color:#664444;line-height:1.7;position:relative;}
+.dc-list li::before{content:'›';position:absolute;left:-13px;color:var(--red);font-size:1.1rem;}
+.dc-list strong{color:#aa8888;} .dc-red{color:#ff8888!important;}
+.dc-core-rules{display:flex;flex-direction:column;gap:.4rem;}
+.dc-core-rule{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:1.1rem;color:#887070;letter-spacing:1px;padding:5px 0;}
+.dc-core-rule:hover{color:var(--text);}
+.dc-chk{color:#cc3322;font-size:1rem;flex-shrink:0;}
+.dc-footer{font-size:.89rem;line-height:1.8;color:#554040;} .dc-footer strong{color:#887070;}
+.dc-sign{margin-top:1.1rem;font-family:var(--mono);font-size:.45rem;color:#5865F2;letter-spacing:1px;}
+
+/* APPLY SECTION */
+.apply-section{padding:5rem 1.5rem;border-top:1px solid rgba(192,57,43,0.12);}
+.apply-wrap{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1.3fr;gap:2rem;align-items:start;}
+@media(max-width:700px){.apply-wrap{grid-template-columns:1fr;}}
+.apply-info{background:rgba(6,2,4,.95);border:1px solid var(--border);border-top:3px solid var(--red);padding:1.8rem;}
+.apply-info-hdr{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.apply-info-icon{font-size:2.4rem;}
+.apply-info-title{font-family:var(--orb);font-size:.65rem;font-weight:900;letter-spacing:2px;color:var(--red-bright);}
+.apply-info-sub{font-family:var(--mono);font-size:.6rem;color:var(--text-muted);letter-spacing:2px;margin-top:.2rem;}
+.apply-info-body p{font-size:.95rem;color:var(--text-dim);line-height:1.8;margin-bottom:1.2rem;}
+.apply-cl{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.4rem;}
+.apply-cl-item{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.65rem;color:#665050;letter-spacing:1px;}
+.apply-cl-chk{color:var(--red);font-size:.9rem;}
+.apply-pips{display:flex;flex-wrap:wrap;gap:.4rem;}
+.apply-pip{font-family:var(--mono);font-size:.58rem;padding:3px 9px;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08);}
+
+.apply-form-card{background:#0e0408;border:1px solid var(--border);}
+.apply-form-topbar{height:3px;background:linear-gradient(90deg,var(--red),var(--red-bright));}
+.apply-dc-msg{display:flex;gap:10px;padding:1rem 1.3rem .6rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.apply-dc-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#5865F2,var(--red-bright));
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.52rem;color:#fff;}
+.apply-dc-author-row{font-family:var(--mono);font-size:.5rem;color:#ddd;margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+.apply-bot-tag{background:#5865F2;color:#fff;font-size:.36rem;padding:1px 5px;font-family:var(--mono);}
+.apply-dc-txt{font-size:.87rem;color:#776060;line-height:1.65;} .apply-dc-txt strong{color:#aaa;}
+.apply-form-inner{padding:1.1rem 1.3rem 1.5rem;display:flex;flex-direction:column;gap:.9rem;}
+.apply-label{font-family:var(--mono);font-size:.42rem;color:#554040;letter-spacing:1px;display:block;margin-bottom:5px;}
+.apply-optional{color:#3a2a2a;font-size:.85em;}
+.apply-input,.apply-textarea,.apply-select{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(192,57,43,.2);
+  color:var(--text);font-family:var(--body);font-size:.95rem;padding:.6rem .8rem;outline:none;
+  transition:border-color .2s,background .2s;}
+.apply-input:focus,.apply-textarea:focus,.apply-select:focus{border-color:var(--red-bright);background:rgba(192,57,43,.05);}
+.apply-select{cursor:pointer!important;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23664040'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.apply-select option{background:#0e0408;color:var(--text);}
+.apply-textarea{resize:vertical;min-height:65px;}
+.apply-char-count{font-size:.76rem;color:#3a2a2a;text-align:right;margin-top:2px;}
+.apply-radio-grp{display:flex;gap:.7rem;flex-wrap:wrap;}
+.apply-radio-opt{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.02);border:1px solid rgba(192,57,43,.15);
+  padding:.5rem .85rem;cursor:pointer!important;font-size:.9rem;color:#776060;flex:1;
+  transition:border-color .2s,background .2s,color .2s;}
+.apply-radio-opt:hover{border-color:var(--red-bright);color:var(--text);}
+.apply-radio-opt input{cursor:pointer!important;}
+.apply-err{color:var(--red-bright);font-family:var(--mono);font-size:.42rem;letter-spacing:1px;min-height:14px;}
+.apply-submit{background:var(--red);color:#fff;border:none;width:100%;font-family:var(--orb);font-size:.58rem;
+  font-weight:700;letter-spacing:3px;padding:.9rem;cursor:pointer!important;
+  transition:background .2s,box-shadow .2s,transform .15s;position:relative;}
+.apply-submit:hover{background:var(--red-bright);box-shadow:0 0 24px rgba(231,76,60,.4);transform:translateY(-1px);}
+
+/* TICKET VIEWER */
+.tickets-section{padding:5rem 1.5rem;border-top:1px solid rgba(192,57,43,0.12);}
+.tickets-wrap{max-width:900px;margin:0 auto;}
+.tickets-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;}
+.tickets-search{background:rgba(255,255,255,.02);border:1px solid var(--border);color:var(--text);
+  font-family:var(--body);font-size:.9rem;padding:.5rem .9rem;outline:none;flex:1;max-width:280px;
+  transition:border-color .2s;}
+.tickets-search:focus{border-color:var(--red-bright);}
+.tickets-count{font-family:var(--mono);font-size:.6rem;color:var(--text-muted);letter-spacing:2px;}
+.tickets-list{display:flex;flex-direction:column;gap:.7rem;}
+.ticket-row{background:rgba(6,2,4,.95);border:1px solid rgba(192,57,43,.15);border-left:4px solid var(--red);
+  padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  transition:border-color .3s,box-shadow .3s,transform .3s;}
+.ticket-row:hover{border-color:var(--red-bright);box-shadow:0 6px 28px rgba(192,57,43,.2);transform:translateX(3px);}
+.ticket-row-id{font-family:var(--mono);font-size:.78rem;color:var(--red);letter-spacing:1px;flex-shrink:0;min-width:110px;}
+.ticket-row-info{flex:1;}
+.ticket-row-ign{font-family:var(--orb);font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--text);}
+.ticket-row-meta{font-family:var(--mono);font-size:.58rem;color:var(--text-muted);letter-spacing:1px;margin-top:2px;}
+.ticket-row-tier{font-family:var(--mono);font-size:.7rem;color:var(--gold);letter-spacing:1px;}
+.ticket-row-by{font-family:var(--mono);font-size:.55rem;color:#554040;letter-spacing:1px;}
+.ticket-row-by span{color:var(--red);} 
+.ticket-status{font-family:var(--mono);font-size:.55rem;letter-spacing:1px;padding:2px 9px;border:1px solid;flex-shrink:0;}
+.ts-open{color:#44cc88;border-color:#44cc88;}
+.ts-pending{color:var(--gold);border-color:var(--gold);}
+.tickets-empty{text-align:center;font-family:var(--mono);font-size:.7rem;color:#3a2a2a;letter-spacing:2px;padding:3rem;border:1px solid rgba(255,255,255,.04);}
+
+/* SUCCESS BANNER */
+.apply-success-banner{background:rgba(20,60,30,.15);border:1px solid rgba(60,200,100,.2);border-left:4px solid #44cc88;
+  padding:1.2rem 1.5rem;display:none;align-items:flex-start;gap:1rem;margin-top:1.5rem;max-width:960px;margin-left:auto;margin-right:auto;}
+.apply-success-banner.show{display:flex;}
+.asb-icon{font-size:2rem;flex-shrink:0;}
+.asb-title{font-family:var(--orb);font-size:.65rem;color:#44cc88;letter-spacing:2px;margin-bottom:.3rem;}
+.asb-id{font-family:var(--mono);font-size:1.3rem;color:#5865F2;letter-spacing:2px;margin-bottom:.4rem;}
+.asb-sub{font-size:.9rem;color:#665050;line-height:1.7;}
+.asb-details{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem;}
+.asb-chip{font-family:var(--mono);font-size:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:3px 10px;color:#887070;}
+.asb-close{margin-left:auto;font-family:var(--mono);font-size:.5rem;color:#444;cursor:pointer!important;flex-shrink:0;padding:4px 8px;border:1px solid rgba(255,255,255,.06);}
+.asb-close:hover{color:var(--red-bright);}
+
+/* DISCORD CTA */
+.discord-section{padding:5rem 1.5rem;text-align:center;border-top:1px solid rgba(192,57,43,0.12);}
+.discord-box{max-width:520px;margin:0 auto;background:rgba(88,101,242,.06);border:2px solid rgba(88,101,242,.3);padding:2.5rem 2rem;position:relative;}
+.discord-box:hover{border-color:rgba(88,101,242,.6);box-shadow:0 0 36px rgba(88,101,242,.18);}
+.discord-icon{font-size:3.5rem;margin-bottom:.9rem;display:block;animation:float 4s ease-in-out infinite;}
+.discord-title{font-family:var(--orb);font-size:.68rem;color:#fff;margin-bottom:.7rem;letter-spacing:2px;}
+.discord-desc{color:var(--text-muted);font-size:.93rem;margin-bottom:1.7rem;line-height:1.75;}
+.discord-link{display:inline-block;background:#5865F2;color:#fff;text-decoration:none;font-family:var(--orb);font-size:.55rem;padding:.9rem 1.8rem;letter-spacing:2px;transition:background .2s,transform .15s,box-shadow .2s;}
+.discord-link:hover{background:#6875f5;transform:translateY(-2px);box-shadow:0 6px 24px rgba(88,101,242,.4);}
+.discord-url{margin-top:.9rem;font-family:var(--mono);font-size:1.1rem;color:rgba(88,101,242,.5);letter-spacing:2px;}
+
+/* HOWTO */
+.howto{max-width:800px;margin:0 auto;padding:5rem 1.5rem;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1.3rem;margin-top:.5rem;}
+.step{background:rgba(6,2,4,.95);border:1px solid var(--border);padding:1.5rem;text-align:center;transition:background .3s,border-color .3s,transform .3s;}
+.step:hover{background:rgba(255,255,255,.03);border-color:var(--red-bright);transform:translateY(-4px);}
+.step-num{font-family:var(--orb);font-size:1.5rem;font-weight:900;color:var(--red);margin-bottom:.7rem;display:block;}
+.step h3{font-family:var(--orb);font-size:.55rem;color:var(--text);margin-bottom:.4rem;letter-spacing:1px;}
+.step p{font-size:.87rem;color:var(--text-muted);line-height:1.65;}
+
+/* FOOTER */
+footer{background:#040102;border-top:3px solid rgba(192,57,43,.2);padding:2.5rem 1.5rem;text-align:center;}
+footer::before{content:'';display:block;height:6px;
+  background:repeating-linear-gradient(90deg,rgba(192,57,43,.3) 0,rgba(192,57,43,.3) 28px,rgba(100,10,10,.4) 28px,rgba(100,10,10,.4) 34px);
+  margin-bottom:2rem;margin-left:-1.5rem;margin-right:-1.5rem;}
+.footer-logo{font-family:var(--orb);font-size:.65rem;color:#3a2a2a;letter-spacing:2px;margin-bottom:.4rem;}
+.footer-sub{font-size:.85rem;color:#2a1a1a;}
+.footer-visitors{margin-top:1rem;font-family:var(--mono);font-size:.55rem;color:#3a2a2a;letter-spacing:1px;}
+.footer-visitors span{color:var(--red);}
+
+/* NAV ICONS */
+.nav-ic{font-size:.85rem;margin-right:4px;display:inline-block;transition:transform .2s;}
+nav a:hover .nav-ic,nav a.active .nav-ic{transform:scale(1.25) translateY(-1px);}
+
+/* LEADERBOARD */
+.leaderboard-section{padding:5rem 1.5rem;border-top:1px solid rgba(192,57,43,0.12);}
+.lb-wrap{max-width:1200px;margin:0 auto;}
+
+/* Tier group blocks — like the tiers section */
+.lb-tier-group{margin-bottom:3rem;}
+.lb-tier-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;padding-bottom:.7rem;border-bottom:1px solid rgba(255,255,255,.05);}
+.lb-tier-icon{font-size:2rem;}
+.lb-tier-title{font-family:var(--orb);font-size:.72rem;font-weight:700;letter-spacing:3px;}
+.lb-tier-count{font-family:var(--mono);font-size:.5rem;color:var(--text-muted);letter-spacing:2px;margin-left:auto;padding:2px 10px;border:1px solid rgba(255,255,255,.07);}
+
+/* Player cards — styled like tier cards */
+.lb-players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;}
+.lb-player-card{background:rgba(6,2,4,0.94);border:1px solid rgba(255,255,255,.07);
+  text-align:center;position:relative;overflow:hidden;
+  transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s;}
+.lb-player-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.03),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none;}
+.lb-player-card:hover{transform:translateY(-6px) scale(1.02);}
+.lb-player-card:hover::before{opacity:1;}
+.lb-player-card::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);pointer-events:none;}
+.lb-player-card:hover::after{left:200%;transition:left .5s ease;}
+.lb-card-top{height:3px;}
+.lb-card-body{padding:1.2rem .8rem 1rem;}
+.lb-card-pos{font-family:var(--orb);font-size:1.4rem;font-weight:900;display:block;margin-bottom:.3rem;}
+.lb-card-pos.r1{color:var(--gold);text-shadow:0 0 14px rgba(240,165,0,.6);}
+.lb-card-pos.r2{color:#c0c0c0;text-shadow:0 0 10px rgba(192,192,192,.4);}
+.lb-card-pos.r3{color:#cd7f32;text-shadow:0 0 10px rgba(205,127,50,.4);}
+.lb-card-pos.rn{color:var(--text-muted);}
+.lb-card-ign{font-family:var(--orb);font-size:.58rem;font-weight:700;letter-spacing:1px;margin-bottom:.2rem;}
+.lb-card-plat{font-family:var(--mono);font-size:.42rem;color:var(--text-muted);letter-spacing:1px;margin-bottom:.6rem;}
+.lb-card-score{display:inline-block;padding:2px 10px;border:1px solid;font-family:var(--mono);font-size:.7rem;letter-spacing:1px;margin-bottom:.4rem;}
+.lb-card-mode{font-family:var(--mono);font-size:.4rem;color:var(--text-muted);letter-spacing:1px;}
+.lb-card-date{font-family:var(--mono);font-size:.38rem;color:#3a2a2a;margin-top:.3rem;}
+
+/* Tier-specific card colours matching tier cards */
+.lb-recruit-card{border-color:#3a3030;}
+.lb-recruit-card .lb-card-top{background:linear-gradient(90deg,#776060,#554040);}
+.lb-recruit-card .lb-card-ign{color:#776060;}
+.lb-recruit-card .lb-card-score{color:#665050;border-color:#665050;}
+.lb-recruit-card:hover{box-shadow:0 14px 44px rgba(120,80,80,.15);}
+
+.lb-fighter-card{border-color:#3a6fa0;}
+.lb-fighter-card .lb-card-top{background:linear-gradient(90deg,#4a90d9,#6aade8);}
+.lb-fighter-card .lb-card-ign{color:#4a90d9;}
+.lb-fighter-card .lb-card-score{color:#4a90d9;border-color:#4a90d9;}
+.lb-fighter-card:hover{box-shadow:0 14px 44px rgba(74,144,217,.22);}
+
+.lb-warrior-card{border-color:#607080;}
+.lb-warrior-card .lb-card-top{background:linear-gradient(90deg,#a0c0d8,#8090a8);}
+.lb-warrior-card .lb-card-ign{color:#a0c0d8;}
+.lb-warrior-card .lb-card-score{color:#a0b8c8;border-color:#a0b8c8;}
+.lb-warrior-card:hover{box-shadow:0 14px 44px rgba(160,192,216,.15);}
+
+.lb-elite-card{border-color:#bb5500;}
+.lb-elite-card .lb-card-top{background:linear-gradient(90deg,#FF8C00,#cc5500);}
+.lb-elite-card .lb-card-ign{color:#FF8C00;}
+.lb-elite-card .lb-card-score{color:#FF8C00;border-color:#FF8C00;}
+.lb-elite-card:hover{box-shadow:0 14px 44px rgba(255,140,0,.28);}
+
+.lb-legend-card{border-color:#009090;}
+.lb-legend-card .lb-card-top{background:linear-gradient(90deg,#00ECEC,#00aaaa);}
+.lb-legend-card .lb-card-ign{color:#00ECEC;animation:lG 2s ease-in-out infinite;}
+.lb-legend-card .lb-card-score{color:#00ECEC;border-color:#00ECEC;}
+.lb-legend-card:hover{box-shadow:0 14px 54px rgba(0,236,236,.3);}
+
+.lb-mythic-card{border-color:var(--mythic-a);position:relative;}
+.lb-mythic-card>.lb-mythic-border{position:absolute;inset:-2px;
+  background:linear-gradient(135deg,var(--mythic-a),var(--mythic-b),#5f5fff,var(--mythic-a));
+  background-size:300% 300%;animation:mBorder 3s linear infinite;z-index:-1;}
+.lb-mythic-card .lb-card-top{background:linear-gradient(90deg,var(--mythic-a),var(--mythic-b));}
+.lb-mythic-card .lb-card-ign{background:linear-gradient(90deg,var(--mythic-a),var(--mythic-b));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.lb-mythic-card .lb-card-score{color:var(--mythic-a);border-color:var(--mythic-a);}
+.lb-mythic-card:hover{box-shadow:0 14px 60px rgba(191,95,255,.45);}
+
+.lb-empty-tier{text-align:center;font-family:var(--mono);font-size:.58rem;color:#3a2a2a;
+  letter-spacing:2px;padding:1.5rem;border:1px solid rgba(255,255,255,.04);}
+
+/* Controls */
+.lb-top-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:2rem;}
+.lb-total-count{font-family:var(--mono);font-size:.6rem;color:var(--text-muted);letter-spacing:2px;}
+.lb-add-btn{font-family:var(--mono);font-size:.5rem;letter-spacing:2px;padding:6px 14px;
+  background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.4);color:var(--red);
+  cursor:pointer!important;transition:all .25s;}
+.lb-add-btn:hover{background:rgba(192,57,43,.2);border-color:var(--red-bright);color:var(--red-bright);}
+
+/* ADD PLAYER MODAL */
+#lb-add-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:60000;
+  display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(12px);}
+#lb-add-overlay.open{opacity:1;pointer-events:all;}
+#lb-add-box{background:#0c0305;border:1px solid rgba(192,57,43,.35);max-width:440px;width:100%;
+  position:relative;transform:scale(.9) translateY(20px);transition:transform .35s cubic-bezier(.22,1,.36,1);}
+#lb-add-overlay.open #lb-add-box{transform:scale(1) translateY(0);}
+.lb-add-topbar{height:3px;background:linear-gradient(90deg,var(--red),var(--red-bright));}
+.lb-add-inner{padding:1.8rem;}
+.lb-add-title{font-family:var(--orb);font-size:.68rem;letter-spacing:3px;color:var(--red-bright);margin-bottom:1.4rem;}
+.lb-add-close{position:absolute;top:.8rem;right:.8rem;width:26px;height:26px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.5rem;
+  color:#555;cursor:pointer!important;transition:background .2s,color .2s;}
+.lb-add-close:hover{background:rgba(192,57,43,.2);color:#ff6b6b;}
+.lb-add-fields{display:flex;flex-direction:column;gap:.9rem;}
+.lb-add-err{color:var(--red-bright);font-family:var(--mono);font-size:.42rem;letter-spacing:1px;min-height:14px;}
+.lb-add-submit{background:var(--red);color:#fff;border:none;width:100%;font-family:var(--orb);
+  font-size:.58rem;font-weight:700;letter-spacing:3px;padding:.9rem;cursor:pointer!important;
+  transition:background .2s,box-shadow .2s,transform .15s;}
+.lb-add-submit:hover{background:var(--red-bright);box-shadow:0 0 24px rgba(231,76,60,.4);transform:translateY(-1px);}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cur-o"></div>
+<div id="cur-i"></div>
+<canvas id="particles"></canvas>
+
+<!-- SCROLL BTN -->
+<div id="scroll-btn"><div class="arr"></div><div class="arr"></div><div class="arr"></div><div class="s-lbl">END</div></div>
+
+<!-- NAME PROMPT -->
+<div id="name-overlay">
+  <div class="name-box">
+    <div class="name-logo">MINEFRONT</div>
+    <div class="name-sub">⚔ BEDROCK TIER TESTING ⚔</div>
+    <div class="name-prompt">ENTER YOUR NAME TO CONTINUE</div>
+    <input class="name-input" id="name-input" type="text" placeholder="Your name or IGN..." maxlength="24" autocomplete="off">
+    <button class="name-enter-btn" id="name-enter-btn">ENTER SITE →</button>
+    <div class="name-err" id="name-err"></div>
+  </div>
+</div>
+
+<!-- VISITOR BAR -->
+<div id="visitor-bar" style="display:none;">
+  <div class="vbar-left">
+    <span>👤</span>
+    <span>Welcome back,</span>
+    <span class="vbar-name" id="vbar-name"></span>
+    <span class="vbar-tag">VISITOR</span>
+  </div>
+  <div class="vbar-right">
+    <div class="vbar-online-wrap"><div class="vbar-dot"></div><span id="online-count">1 online</span></div>
+    <span class="vbar-change" id="vbar-change" title="Change name">✎ change name</span>
+  </div>
+</div>
+
+<!-- TIER MODAL -->
+<div id="tm-overlay">
+  <div id="tm-box">
+    <div class="tm-topbar" id="tm-topbar"></div>
+    <button class="tm-close" id="tm-close">✕</button>
+    <div class="tm-header">
+      <div class="tm-icon" id="tm-icon">🌱</div>
+      <div>
+        <div class="tm-label">BEDROCK EDITION TIER</div>
+        <div class="tm-name" id="tm-name">RECRUIT</div>
+        <div class="tm-rank" id="tm-rank-small">F RANK</div>
+      </div>
+    </div>
+    <div class="tm-body" id="tm-body"></div>
+  </div>
+</div>
+
+<header>
+  <div class="heyebrow">🏆 BEDROCK EDITION</div>
+  <div style="margin-bottom:.5rem;">
+    <h1 class="logo-main" data-text="MINEFRONT">MINE<span>FRONT</span></h1>
+  </div>
+  <p class="logo-tag">TIER TESTING SYSTEM</p>
+  <div class="hbadges">
+    <span class="hbadge live"><span class="hbdot"></span> SERVER ONLINE</span>
+    <span class="hbadge">⚔ PVP RANKED</span>
+    <span class="hbadge">🏆 BEDROCK + JAVA</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#about"><span class="nav-ic">📋</span>ABOUT</a>
+  <a href="#tiers"><span class="nav-ic">🏅</span>TIERS</a>
+  <a href="#modes"><span class="nav-ic">🎮</span>GAME MODES</a>
+  <a href="#rules"><span class="nav-ic">📜</span>RULES</a>
+  <a href="#leaderboard"><span class="nav-ic">🏆</span>LEADERBOARD</a>
+  <a href="#apply" class="nav-cta"><span class="nav-ic">🎟</span>APPLY</a>
+  <a href="#tickets"><span class="nav-ic">🎫</span>VIEW TICKETS</a>
+  <a href="#join"><span class="nav-ic">🚪</span>HOW TO JOIN</a>
+</nav>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="sec-eyebrow">WHAT IS THIS?</div>
+  <h2 class="sec-title">ABOUT MINEFRONT</h2>
+  <div class="sec-line"></div>
+  <div class="about-card">
+    <strong>Minefront</strong> is a competitive Bedrock Edition PvP testing server where players earn their tier through real combat — no exceptions. Our structured ranking system from <strong>Recruit</strong> to <strong>Mythic</strong> ensures every rank means something. <strong>Click any tier card</strong> to learn more about it.
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<div class="tier-progress" id="tiers">
+  <div class="progress-bar">
+    <div class="progress-step ps-r">🌱 RECRUIT</div>
+    <div class="progress-step ps-f">⚔️ FIGHTER</div>
+    <div class="progress-step ps-w">🛡️ WARRIOR</div>
+    <div class="progress-step ps-e">🔥 ELITE</div>
+    <div class="progress-step ps-l">💎 LEGEND</div>
+    <div class="progress-step ps-m">✨ MYTHIC</div>
+  </div>
+</div>
+
+<!-- TIERS -->
+<section class="tiers-section">
+  <div class="sec-eyebrow">RANK TIERS</div>
+  <h2 class="sec-title">BEDROCK TIER LIST</h2>
+  <div class="sec-line"></div>
+  <div class="tiers-grid">
+    <div class="tier-card tier-recruit" data-tier="recruit">
+      <div class="tier-header"><span class="tier-icon">🌱</span><div class="tier-name">RECRUIT</div><div class="tier-number">TIER I</div></div>
+      <div class="tier-body"><p class="tier-desc">Entry level. Every legend starts here.</p><span class="tier-perk">F RANK</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+    <div class="tier-card tier-fighter" data-tier="fighter">
+      <div class="tier-header"><span class="tier-icon">⚔️</span><div class="tier-name">FIGHTER</div><div class="tier-number">TIER II</div></div>
+      <div class="tier-body"><p class="tier-desc">Basic combat mastered. The climb begins.</p><span class="tier-perk">D RANK</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+    <div class="tier-card tier-warrior" data-tier="warrior">
+      <div class="tier-header"><span class="tier-icon">🛡️</span><div class="tier-name">WARRIOR</div><div class="tier-number">TIER III</div></div>
+      <div class="tier-body"><p class="tier-desc">Consistent fighter, solid fundamentals.</p><span class="tier-perk">C RANK</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+    <div class="tier-card tier-elite" data-tier="elite">
+      <div class="tier-header"><span class="tier-icon">🔥</span><div class="tier-name">ELITE</div><div class="tier-number">TIER IV</div></div>
+      <div class="tier-body"><p class="tier-desc">Dangerous. Wins more than loses.</p><span class="tier-perk">B → A RANK</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+    <div class="tier-card tier-legend" data-tier="legend">
+      <div class="tier-header"><span class="tier-icon">💎</span><div class="tier-name">LEGEND</div><div class="tier-number">TIER V</div></div>
+      <div class="tier-body"><p class="tier-desc">Server-known. Near untouchable.</p><span class="tier-perk">A → S RANK</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+    <div class="tier-card tier-mythic" data-tier="mythic">
+      <div class="mythic-border"></div>
+      <div class="mythic-crown">✦ HIGHEST RANK ✦</div>
+      <div class="mythic-stars" id="mythic-stars"></div>
+      <div class="tier-header"><span class="tier-icon">✨</span><div class="tier-name">MYTHIC</div><div class="tier-number">TIER VI</div></div>
+      <div class="tier-body"><p class="tier-desc">Defines competitive standards.</p><span class="tier-perk">S → HIGH S</span><p class="tier-click-hint">▶ CLICK FOR DETAILS</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME MODES -->
+<section class="modes-section" id="modes">
+  <div class="sec-eyebrow">TESTED IN THESE MODES</div>
+  <h2 class="sec-title">GAME MODES</h2>
+  <div class="sec-line"></div>
+  <div class="modes-grid">
+    <div class="mode-card"><span class="mode-icon">🥊</span><div class="mode-name">BOXING</div><div class="mode-tag">CLOSE COMBAT</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:.3s">⚔️</span><div class="mode-name">BEDFIGHT</div><div class="mode-tag">BED WARS PVP</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:.6s">🏹</span><div class="mode-name">UHC</div><div class="mode-tag">ULTRA HARDCORE</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:.9s">💨</span><div class="mode-name">MLG RUSH</div><div class="mode-tag">CLUTCH SKILL</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:1.2s">🌉</span><div class="mode-name">BRIDGE</div><div class="mode-tag">SPEED BRIDGE</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:1.5s">🦪</span><div class="mode-name">MACE PVP</div><div class="mode-tag">WEAPON SKILL</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:1.8s">☁️</span><div class="mode-name">SKYWARS</div><div class="mode-tag">SKY COMBAT</div></div>
+    <div class="mode-card"><span class="mode-icon" style="animation-delay:2.1s">📊</span><div class="mode-name">MIDFIGHT</div><div class="mode-tag">MID CONTROL</div></div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section class="rules-section" id="rules">
+  <div class="sec-eyebrow">EVALUATION CRITERIA</div>
+  <h2 class="sec-title">TIER TEST RULES</h2>
+  <div class="sec-line"></div>
+  <div class="rules-wrap">
+    <div class="dc-card">
+      <div class="dc-header">
+        <div class="dc-avatar">MF</div>
+        <div class="dc-meta">
+          <div class="dc-author">MineFront Bot <span class="dc-tag-bot">BOT</span></div>
+          <div class="dc-time">Today — #tier-rules</div>
+        </div>
+      </div>
+      <div class="dc-body">
+        <div class="dc-ping">@Trial Tier Testers</div>
+        <div class="dc-ann-title">⚔️ Announcement — Trial Tier Testers (Java &amp; Bedrock Divisions)</div>
+        <div class="dc-div"></div>
+        <p class="dc-intro">We welcome all newly appointed <strong>Trial Tier Testers</strong> for both <strong>Java</strong> and <strong>Bedrock</strong> divisions. All testers begin with <strong>Tier 1 (Trial Phase)</strong>. Fully understand and apply these rules before assigning any tier.</p>
+        <div class="dc-div"></div>
+        <div class="dc-sec">📊 SCORING SYSTEM</div>
+        <div class="dc-score-row">
+          <div class="dc-score-box"><span class="dc-score-num">10</span><span class="dc-score-lbl">START SCORE</span></div>
+          <div class="dc-score-box"><span class="dc-score-num" style="color:#ff6b6b;">−1</span><span class="dc-score-lbl">PER MISTAKE</span></div>
+          <div class="dc-score-box"><span class="dc-score-num" style="color:#664040;">↓</span><span class="dc-score-lbl">MORE = LOWER</span></div>
+        </div>
+        <div class="dc-warn">⚠️ <strong>If Seriousness &lt; 5 → Test is INVALID (Retake required)</strong></div>
+        <div class="dc-div"></div>
+        <div class="dc-sec">🔍 WHAT WE CHECK</div>
+        <div class="dc-criteria">
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">01</div><div class="dc-crit-name">SERIOUSNESS</div></div><ul class="dc-list"><li>Stay focused throughout</li><li><span class="dc-red">No trolling, no excuses</span></li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">02</div><div class="dc-crit-name">GAME SENSE</div></div><ul class="dc-list"><li>Smart decision-making under pressure</li><li>Ability to adapt mid-fight</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">03</div><div class="dc-crit-name">REACTION SPEED</div></div><ul class="dc-list"><li>Fast combos, flicks, counters</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">04</div><div class="dc-crit-name">GAME MODE SKILL</div></div><ul class="dc-list"><li>Must match the claimed tier level</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">05</div><div class="dc-crit-name">MECHANICS</div></div><ul class="dc-list"><li>Proper hit selecting &amp; jump reset — <strong class="dc-red">no spam</strong></li><li>Fast and controlled keybind usage</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">06</div><div class="dc-crit-name">MOVEMENT</div></div><ul class="dc-list"><li>Unpredictable — <strong class="dc-red">not only W-key</strong></li><li>Good strafing</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">07</div><div class="dc-crit-name">TIMING</div></div><ul class="dc-list"><li>Correct timing on hits, blocks, bridging</li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">08</div><div class="dc-crit-name">AIM &amp; CONTROL</div></div><ul class="dc-list"><li>Accurate and consistent aim</li><li><span class="dc-red">No excuses</span></li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">09</div><div class="dc-crit-name">STRATEGY &amp; MENTAL</div></div><ul class="dc-list"><li>Effective tactics</li><li>Calm gameplay — <strong class="dc-red">no panic</strong></li></ul></div>
+          <div class="dc-crit"><div class="dc-crit-h"><div class="dc-crit-num">10</div><div class="dc-crit-name">OVERALL PERFORMANCE</div></div><ul class="dc-list"><li>Total mistakes (−) vs good plays (+)</li><li><strong>Consistency matters most</strong></li></ul></div>
+        </div>
+        <div class="dc-div"></div>
+        <div class="dc-sec">✅ CORE RULES</div>
+        <div class="dc-core-rules">
+          <div class="dc-core-rule"><span class="dc-chk">✔</span> Less mistakes = Higher tier</div>
+          <div class="dc-core-rule"><span class="dc-chk">✔</span> More consistency = Better player</div>
+          <div class="dc-core-rule"><span class="dc-chk">✔</span> Serious gameplay = Valid result</div>
+        </div>
+        <div class="dc-div"></div>
+        <p class="dc-footer">All trial testers must strictly follow these rules during <strong>Tier 1 testing</strong> before assigning any results.</p>
+        <div class="dc-sign">— Head of Tier Testing, Chief of Tier Testing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APPLY -->
+<section class="apply-section" id="apply">
+  <div class="sec-eyebrow">OPEN A TICKET</div>
+  <h2 class="sec-title">APPLY FOR TIER TEST</h2>
+  <div class="sec-line"></div>
+  <div class="apply-wrap">
+    <div class="apply-info">
+      <div class="apply-info-hdr">
+        <span class="apply-info-icon">🎟️</span>
+        <div><div class="apply-info-title">TIER TEST APPLICATION</div><div class="apply-info-sub">FREE — NO PAYMENT NEEDED</div></div>
+      </div>
+      <div class="apply-info-body">
+        <p>Ready to prove your rank? Submit a free tier test application. A certified tester will review and schedule your session.</p>
+      </div>
+      <div class="apply-cl">
+        <div class="apply-cl-item"><span class="apply-cl-chk">✔</span> 100% Free to apply</div>
+        <div class="apply-cl-item"><span class="apply-cl-chk">✔</span> Bedrock &amp; Java both accepted</div>
+        <div class="apply-cl-item"><span class="apply-cl-chk">✔</span> Reviewed by certified testers</div>
+        <div class="apply-cl-item"><span class="apply-cl-chk">✔</span> Results from real combat only</div>
+        <div class="apply-cl-item"><span class="apply-cl-chk">✔</span> Your name shown publicly on ticket</div>
+      </div>
+      <div class="apply-pips">
+        <div class="apply-pip">🌱 RECRUIT</div><div class="apply-pip">⚔️ FIGHTER</div><div class="apply-pip">🛡️ WARRIOR</div>
+        <div class="apply-pip">🔥 ELITE</div><div class="apply-pip">💎 LEGEND</div><div class="apply-pip">✨ MYTHIC</div>
+      </div>
+    </div>
+    <div class="apply-form-card">
+      <div class="apply-form-topbar"></div>
+      <div class="apply-dc-msg">
+        <div class="apply-dc-av">MF</div>
+        <div>
+          <div class="apply-dc-author-row">MineFront Bot <span class="apply-bot-tag">BOT</span></div>
+          <div class="apply-dc-txt">Fill in your details to open a <strong>Tier Test Ticket</strong>. Your name will appear publicly on the ticket board.</div>
+        </div>
+      </div>
+      <div class="apply-form-inner">
+        <div>
+          <label class="apply-label">YOUR IGN (IN-GAME NAME)</label>
+          <input class="apply-input" id="a-ign" type="text" placeholder="e.g. xNotch_PvP" maxlength="24">
+        </div>
+        <div>
+          <label class="apply-label">SUBMITTED BY (WEBSITE NAME)</label>
+          <input class="apply-input" id="a-submitter" type="text" placeholder="Auto-filled from your name" readonly style="opacity:.6;cursor:not-allowed!important;">
+        </div>
+        <div>
+          <label class="apply-label">PLATFORM</label>
+          <div class="apply-radio-grp">
+            <label class="apply-radio-opt"><input type="radio" name="apl" value="Bedrock" checked> <span>📱 Bedrock</span></label>
+            <label class="apply-radio-opt"><input type="radio" name="apl" value="Java"> <span>☕ Java</span></label>
+          </div>
+        </div>
+        <div>
+          <label class="apply-label">TIER YOU'RE APPLYING FOR</label>
+          <select class="apply-select" id="a-tier">
+            <option value="">— Select Tier —</option>
+            <option value="Recruit 🌱">Recruit 🌱 (F)</option>
+            <option value="Fighter ⚔️">Fighter ⚔️ (D)</option>
+            <option value="Warrior 🛡️">Warrior 🛡️ (C)</option>
+            <option value="Elite Warrior 🔥">Elite Warrior 🔥 (B–A)</option>
+            <option value="Legend 💎">Legend 💎 (A–S)</option>
+            <option value="Mythic ✨">Mythic ✨ (S–High S)</option>
+          </select>
+        </div>
+        <div>
+          <label class="apply-label">GAME MODE</label>
+          <select class="apply-select" id="a-mode">
+            <option value="">— Select Game Mode —</option>
+            <option value="🥊 Boxing">🥊 Boxing</option>
+            <option value="⚔️ BedFight">⚔️ BedFight</option>
+            <option value="🏹 UHC">🏹 UHC</option>
+            <option value="💨 MLG Rush">💨 MLG Rush</option>
+            <option value="🌉 Bridge">🌉 Bridge</option>
+            <option value="🦪 Mace PvP">🦪 Mace PvP</option>
+            <option value="☁️ Skywars">☁️ Skywars</option>
+            <option value="📊 Midfight">📊 Midfight</option>
+          </select>
+        </div>
+        <div>
+          <label class="apply-label">WHY DO YOU BELONG HERE?</label>
+          <textarea class="apply-textarea" id="a-reason" placeholder="Briefly describe your experience, playstyle, or proof..." rows="3" maxlength="280"></textarea>
+          <div class="apply-char-count"><span id="a-char">0</span>/280</div>
+        </div>
+        <div>
+          <label class="apply-label">DISCORD TAG <span class="apply-optional">(optional)</span></label>
+          <input class="apply-input" id="a-discord" type="text" placeholder="e.g. username or user#0000" maxlength="40">
+        </div>
+        <div class="apply-err" id="apply-err"></div>
+        <button class="apply-submit" id="apply-submit">🎟 OPEN FREE TICKET</button>
+      </div>
+    </div>
+  </div>
+  <div class="apply-success-banner" id="apply-banner">
+    <span class="asb-icon">✅</span>
+    <div>
+      <div class="asb-title">TICKET OPENED SUCCESSFULLY</div>
+      <div class="asb-id" id="asb-id">#TICKET-0000</div>
+      <div class="asb-sub">Your application is submitted and visible on the ticket board. A tester will review and contact you via Discord. Stay ready!</div>
+      <div class="asb-details" id="asb-details"></div>
+    </div>
+    <span class="asb-close" id="asb-close">✕</span>
+  </div>
+</section>
+
+<!-- TICKET VIEWER -->
+<section class="tickets-section" id="tickets">
+  <div class="sec-eyebrow">SUBMITTED APPLICATIONS</div>
+  <h2 class="sec-title">TICKET BOARD</h2>
+  <div class="sec-line"></div>
+  <div class="tickets-wrap">
+    <div class="tickets-controls">
+      <input class="tickets-search" id="tickets-search" type="text" placeholder="Search by IGN, tier, mode...">
+      <div class="tickets-count" id="tickets-count">0 TICKETS</div>
+    </div>
+    <div class="tickets-list" id="tickets-list">
+      <div class="tickets-empty">NO TICKETS YET — BE THE FIRST TO APPLY ⚔</div>
+    </div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="leaderboard-section" id="leaderboard">
+  <div class="sec-eyebrow">HALL OF FAME</div>
+  <h2 class="sec-title">LEADERBOARD</h2>
+  <div class="sec-line"></div>
+  <div class="lb-wrap">
+    <div class="lb-top-controls">
+      <span class="lb-total-count" id="lb-count">0 PLAYERS RANKED</span>
+      <button class="lb-add-btn" id="lb-open-add">＋ ADD PLAYER</button>
+    </div>
+    <!-- MYTHIC -->
+    <div class="lb-tier-group" id="lb-group-mythic">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">✨</span>
+        <span class="lb-tier-title" style="background:linear-gradient(90deg,#bf5fff,#ff5fcb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">MYTHIC</span>
+        <span class="lb-tier-count" id="lb-cnt-mythic">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-mythic"><div class="lb-empty-tier">NO MYTHIC PLAYERS YET</div></div>
+    </div>
+    <!-- LEGEND -->
+    <div class="lb-tier-group" id="lb-group-legend">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">💎</span>
+        <span class="lb-tier-title" style="color:#00ECEC;">LEGEND</span>
+        <span class="lb-tier-count" id="lb-cnt-legend">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-legend"><div class="lb-empty-tier">NO LEGEND PLAYERS YET</div></div>
+    </div>
+    <!-- ELITE -->
+    <div class="lb-tier-group" id="lb-group-elite">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">🔥</span>
+        <span class="lb-tier-title" style="color:#FF8C00;">ELITE</span>
+        <span class="lb-tier-count" id="lb-cnt-elite">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-elite"><div class="lb-empty-tier">NO ELITE PLAYERS YET</div></div>
+    </div>
+    <!-- WARRIOR -->
+    <div class="lb-tier-group" id="lb-group-warrior">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">🛡️</span>
+        <span class="lb-tier-title" style="color:#a0c0d8;">WARRIOR</span>
+        <span class="lb-tier-count" id="lb-cnt-warrior">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-warrior"><div class="lb-empty-tier">NO WARRIOR PLAYERS YET</div></div>
+    </div>
+    <!-- FIGHTER -->
+    <div class="lb-tier-group" id="lb-group-fighter">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">⚔️</span>
+        <span class="lb-tier-title" style="color:#4a90d9;">FIGHTER</span>
+        <span class="lb-tier-count" id="lb-cnt-fighter">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-fighter"><div class="lb-empty-tier">NO FIGHTER PLAYERS YET</div></div>
+    </div>
+    <!-- RECRUIT -->
+    <div class="lb-tier-group" id="lb-group-recruit">
+      <div class="lb-tier-header">
+        <span class="lb-tier-icon">🌱</span>
+        <span class="lb-tier-title" style="color:#776060;">RECRUIT</span>
+        <span class="lb-tier-count" id="lb-cnt-recruit">0 PLAYERS</span>
+      </div>
+      <div class="lb-players-grid" id="lb-grid-recruit"><div class="lb-empty-tier">NO RECRUIT PLAYERS YET</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD PLAYER MODAL -->
+<div id="lb-add-overlay">
+  <div id="lb-add-box">
+    <div class="lb-add-topbar"></div>
+    <button class="lb-add-close" id="lb-add-close">✕</button>
+    <div class="lb-add-inner">
+      <div class="lb-add-title">＋ ADD PLAYER TO LEADERBOARD</div>
+      <div class="lb-add-fields">
+        <div>
+          <label class="apply-label">PLAYER IGN</label>
+          <input class="apply-input" id="lb-ign" type="text" placeholder="e.g. xNotch_PvP" maxlength="24">
+        </div>
+        <div>
+          <label class="apply-label">PLATFORM</label>
+          <div class="apply-radio-grp">
+            <label class="apply-radio-opt"><input type="radio" name="lb-apl" value="Bedrock" checked> <span>📱 Bedrock</span></label>
+            <label class="apply-radio-opt"><input type="radio" name="lb-apl" value="Java"> <span>☕ Java</span></label>
+          </div>
+        </div>
+        <div>
+          <label class="apply-label">TIER ACHIEVED</label>
+          <select class="apply-select" id="lb-tier">
+            <option value="">— Select Tier —</option>
+            <option value="recruit">🌱 Recruit (F)</option>
+            <option value="fighter">⚔️ Fighter (D)</option>
+            <option value="warrior">🛡️ Warrior (C)</option>
+            <option value="elite">🔥 Elite (B–A)</option>
+            <option value="legend">💎 Legend (A–S)</option>
+            <option value="mythic">✨ Mythic (S–High S)</option>
+          </select>
+        </div>
+        <div>
+          <label class="apply-label">GAME MODE</label>
+          <select class="apply-select" id="lb-mode">
+            <option value="">— Select Game Mode —</option>
+            <option value="🥊 Boxing">🥊 Boxing</option>
+            <option value="⚔️ BedFight">⚔️ BedFight</option>
+            <option value="🏹 UHC">🏹 UHC</option>
+            <option value="💨 MLG Rush">💨 MLG Rush</option>
+            <option value="🌉 Bridge">🌉 Bridge</option>
+            <option value="🦪 Mace PvP">🦪 Mace PvP</option>
+            <option value="☁️ Skywars">☁️ Skywars</option>
+            <option value="📊 Midfight">📊 Midfight</option>
+          </select>
+        </div>
+        <div>
+          <label class="apply-label">SCORE / POINTS</label>
+          <input class="apply-input" id="lb-score" type="number" placeholder="e.g. 850" min="0" max="9999">
+        </div>
+        <div class="lb-add-err" id="lb-add-err"></div>
+        <button class="lb-add-submit" id="lb-add-submit">🏆 ADD TO LEADERBOARD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCORD -->
+<section class="discord-section" id="discord">
+  <div class="sec-eyebrow">COMMUNITY</div>
+  <h2 class="sec-title">JOIN OUR DISCORD</h2>
+  <div class="sec-line"></div>
+  <div class="discord-box">
+    <span class="discord-icon">🎮</span>
+    <h3 class="discord-title">MINEFRONT COMMUNITY</h3>
+    <p class="discord-desc">Book your test session, find opponents, track rankings, and stay updated with all server events and tier changes.</p>
+    <a href="#" class="discord-link">JOIN SERVER</a>
+    <p class="discord-url">discord.gg/minefront</p>
+  </div>
+</section>
+
+<!-- HOW TO JOIN -->
+<section class="howto" id="join">
+  <div class="sec-eyebrow">GET STARTED</div>
+  <h2 class="sec-title">HOW TO GET TESTED</h2>
+  <div class="sec-line"></div>
+  <div class="steps">
+    <div class="step"><span class="step-num">01</span><h3>JOIN DISCORD</h3><p>Enter our community server and read the tier rules in #info.</p></div>
+    <div class="step"><span class="step-num">02</span><h3>OPEN TICKET</h3><p>Submit your free tier test ticket on this website or in #book-test.</p></div>
+    <div class="step"><span class="step-num">03</span><h3>SHOW UP</h3><p>Join at your scheduled time and fight — no excuses.</p></div>
+    <div class="step"><span class="step-num">04</span><h3>EARN RANK</h3><p>Receive your tier role based on real combat performance.</p></div>
+  </div>
+</section>
+
+<footer id="footer-bottom">
+  <div class="footer-logo">MINEFRONT © 2025</div>
+  <p class="footer-sub">Bedrock Edition PvP Testing — Earn Your Rank.</p>
+  <div class="footer-visitors">TOTAL VISITORS: <span id="visitor-count-footer">—</span></div>
+</footer>
+
+<script>
+// ═══ CURSOR ═══
+const cO=document.getElementById('cur-o'),cI=document.getElementById('cur-i');
+let mx=0,my=0,ox=0,oy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cI.style.left=mx+'px';cI.style.top=my+'px';});
+(function lc(){ox+=(mx-ox)*.12;oy+=(my-oy)*.12;cO.style.left=ox+'px';cO.style.top=oy+'px';requestAnimationFrame(lc);})();
+document.querySelectorAll('a,button,.tier-card,.mode-card,.step,.dc-crit,.tm-close,.apply-radio-opt,.ticket-row,.lb-row,.lb-tab,.lb-add-btn,.lb-pod').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('ch'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('ch'));
+});
+document.addEventListener('mousedown',()=>document.body.classList.add('cc'));
+document.addEventListener('mouseup',()=>document.body.classList.remove('cc'));
+
+// ═══ PARTICLES ═══
+const cv=document.getElementById('particles'),ctx=cv.getContext('2d');
+let W,H,pts=[];
+function rsz(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+rsz();window.addEventListener('resize',rsz);
+for(let i=0;i<50;i++)pts.push({x:Math.random()*5000,y:Math.random()*5000,s:Math.random()*1.4+.3,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,o:Math.random()*.3+.08});
+(function dp(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.save();ctx.globalAlpha=p.o;ctx.fillStyle='#c0392b';ctx.fillRect(p.x,p.y,p.s,p.s);ctx.restore();});requestAnimationFrame(dp);})();
+
+// ═══ SCROLL BTN ═══
+const sb=document.getElementById('scroll-btn');
+window.addEventListener('scroll',()=>{const sc=window.scrollY,mx2=document.body.scrollHeight-window.innerHeight;sc<mx2-80?sb.classList.add('vis'):sb.classList.remove('vis');});
+sb.addEventListener('click',()=>document.getElementById('footer-bottom').scrollIntoView({behavior:'smooth'}));
+
+// ═══ NAME SYSTEM ═══
+let visitorName = localStorage.getItem('mf_name')||'';
+const nameOverlay=document.getElementById('name-overlay');
+const visitorBar=document.getElementById('visitor-bar');
+const vbarName=document.getElementById('vbar-name');
+
+// Track visitors
+function trackVisitor(name){
+  let visitors=JSON.parse(localStorage.getItem('mf_visitors')||'[]');
+  if(!visitors.find(v=>v.name===name)){
+    visitors.push({name,time:Date.now()});
+    localStorage.setItem('mf_visitors',JSON.stringify(visitors));
+  }
+  document.getElementById('visitor-count-footer').textContent=visitors.length;
+  // Online count 500–599
+  document.getElementById('online-count').textContent=(Math.floor(Math.random()*100)+500)+' online';
+}
+
+function showSite(name){
+  visitorName=name;
+  nameOverlay.style.display='none';
+  visitorBar.style.display='flex';
+  vbarName.textContent=name;
+  document.getElementById('a-submitter').value=name;
+  trackVisitor(name);
+}
+
+if(visitorName){showSite(visitorName);}
+
+document.getElementById('name-enter-btn').addEventListener('click',()=>{
+  const v=document.getElementById('name-input').value.trim();
+  if(!v){document.getElementById('name-err').textContent='⚠ Please enter your name to continue.';return;}
+  if(v.length<2){document.getElementById('name-err').textContent='⚠ Name too short.';return;}
+  localStorage.setItem('mf_name',v);
+  showSite(v);
+});
+document.getElementById('name-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('name-enter-btn').click();});
+document.getElementById('vbar-change').addEventListener('click',()=>{
+  localStorage.removeItem('mf_name');
+  visitorBar.style.display='none';
+  nameOverlay.style.display='flex';
+  document.getElementById('name-input').value='';
+});
+
+// ═══ MYTHIC STARS ═══
+const stEl=document.getElementById('mythic-stars');
+for(let i=0;i<18;i++){const s=document.createElement('div');s.className='mythic-star';s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*2.5}s;animation-duration:${1.2+Math.random()*1.5}s;`;stEl.appendChild(s);}
+
+// ═══ TIER DATA ═══
+const TD={
+  recruit:{icon:'🌱',name:'Recruit',skillLabel:'BEGINNER',skillEmoji:'🐣',skillDesc:'This is a NOOB tier. Brand new and still learning the basics.',
+    skillBars:{aim:10,speed:8,mechanics:8,gamesense:10,consistency:8},
+    traits:[{icon:'📖',text:'<strong>Learning</strong> basic PvP mechanics'},{icon:'🎯',text:'<strong>Improving</strong> aim & movement'},{icon:'🧠',text:'<strong>Understanding</strong> survival fundamentals'}],
+    rankRange:'F (whole)',rankDesc:'Completely new to competitive PvP. The starting point.',colorA:'#776060',colorB:'#554040',tierPos:1,mythic:false},
+  fighter:{icon:'⚔️',name:'Fighter',skillLabel:'NOVICE',skillEmoji:'🟦',skillDesc:'Getting there — but still pretty much a NOOB. Basic moves only.',
+    skillBars:{aim:25,speed:20,mechanics:20,gamesense:22,consistency:20},
+    traits:[{icon:'⚔️',text:'<strong>Understands</strong> basic combat'},{icon:'🗺️',text:'Uses <strong>simple strategies</strong>'},{icon:'🤺',text:'Handles <strong>beginner duels</strong>'}],
+    rankRange:'D (whole)',rankDesc:'Has grasped fundamentals. Handles basic 1v1 with some consistency.',colorA:'#4a90d9',colorB:'#6aade8',tierPos:2,mythic:false},
+  warrior:{icon:'🛡️',name:'Warrior',skillLabel:'AVERAGE',skillEmoji:'⚖️',skillDesc:'Not a noob anymore, but not truly skilled yet. The average grinder.',
+    skillBars:{aim:45,speed:40,mechanics:42,gamesense:44,consistency:45},
+    traits:[{icon:'🔄',text:'<strong>Consistent</strong> in fights'},{icon:'⏱️',text:'Good <strong>weapon timing</strong>'},{icon:'📍',text:'Solid <strong>positioning</strong>'}],
+    rankRange:'C (whole)',rankDesc:'Reliable and consistent. Understands positioning and timing.',colorA:'#a0c0d8',colorB:'#8090a8',tierPos:3,mythic:false},
+  elite:{icon:'🔥',name:'Elite Warrior',skillLabel:'SKILLED',skillEmoji:'🔥',skillDesc:'Getting into PRO territory. Sharp instincts, clean combos.',
+    skillBars:{aim:68,speed:65,mechanics:70,gamesense:67,consistency:65},
+    traits:[{icon:'💥',text:'<strong>Wins</strong> most encounters'},{icon:'⚡',text:'Strong <strong>reaction speed</strong>'},{icon:'🔗',text:'Good <strong>combo control</strong>'}],
+    rankRange:'B Low → A Low',rankDesc:'Dangerous opponent who wins more than they lose.',colorA:'#FF8C00',colorB:'#cc5500',tierPos:4,mythic:false},
+  legend:{icon:'💎',name:'Legend',skillLabel:'PRO',skillEmoji:'💎',skillDesc:'PRO tier. Near-elite mechanics. Server-wide reputation. Hard to beat.',
+    skillBars:{aim:85,speed:83,mechanics:86,gamesense:88,consistency:84},
+    traits:[{icon:'🏆',text:'<strong>Exceptional</strong> mechanics'},{icon:'🚫',text:'Nearly <strong>unbeatable</strong> in 1v1'},{icon:'🌐',text:'<strong>Server-wide</strong> reputation'}],
+    rankRange:'A → Low S',rankDesc:"One of the server's best. Known by name. Mechanics near untouchable.",colorA:'#00ECEC',colorB:'#00aaaa',tierPos:5,mythic:false},
+  mythic:{icon:'✨',name:'Mythic',skillLabel:'BEYOND RANK',skillEmoji:'🌌',skillDesc:'Mythic players cannot be categorized. They exist outside the normal skill ladder — a class of their own.',
+    skillBars:{aim:98,speed:97,mechanics:99,gamesense:98,consistency:97},
+    traits:[{icon:'👑',text:'<strong>Highest</strong> achievable rank'},{icon:'📐',text:'<strong>Defines</strong> competitive standards'},{icon:'🌌',text:'Absolute <strong>pinnacle</strong> of server PvP'}],
+    rankRange:'S → High S',rankDesc:'The apex. Mythic players set the bar for competitive Bedrock PvP.',colorA:'#bf5fff',colorB:'#ff5fcb',tierPos:6,mythic:true}
+};
+const skillColors={'BEGINNER':'#776060','NOVICE':'#4a90d9','AVERAGE':'#a0c0d8','SKILLED':'#FF8C00','PRO':'#00ECEC','BEYOND RANK':'#bf5fff'};
+
+// ═══ TIER MODAL ═══
+const tmOverlay=document.getElementById('tm-overlay');
+function openTM(key){
+  const d=TD[key];if(!d)return;
+  const sc=skillColors[d.skillLabel]||d.colorA;
+  document.getElementById('tm-topbar').style.background=`linear-gradient(90deg,${d.colorA},${d.colorB})`;
+  document.getElementById('tm-icon').textContent=d.icon;
+  const tnEl=document.getElementById('tm-name');
+  if(d.mythic){tnEl.style.cssText=`background:linear-gradient(90deg,${d.colorA},${d.colorB});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`;}
+  else{tnEl.style.cssText=`color:${d.colorA};`;}
+  tnEl.textContent=d.name.toUpperCase();
+  document.getElementById('tm-rank-small').textContent=d.rankRange;
+  document.getElementById('tm-box').style.borderColor=d.colorA+'33';
+
+  let ladder='';
+  for(let i=1;i<=6;i++){
+    const a=i===d.tierPos,p=i<d.tierPos;
+    ladder+=`<div class="tm-dot ${a?'active':''} ${p?'past':''}" style="${a?`background:${d.colorA};box-shadow:0 0 8px ${d.colorA}88;`:(p?`background:${d.colorA}44;`:'')}"></div>`;
+  }
+  const traits=d.traits.map(t=>`<div class="tm-trait" style="border-left-color:${d.colorA}55;"><span class="tm-trait-ic">${t.icon}</span><span class="tm-trait-txt">${t.text}</span></div>`).join('');
+  const statL={aim:'AIM',speed:'SPEED',mechanics:'MECHANICS',gamesense:'GAME SENSE',consistency:'CONSISTENCY'};
+  const bars=Object.entries(d.skillBars).map(([k,v])=>`<div class="tm-stat"><div class="tm-stat-h"><span class="tm-stat-n">${statL[k]}</span><span class="tm-stat-v" style="color:${d.colorA}">${v}</span></div><div class="tm-bar-bg"><div class="tm-bar-fill" data-w="${v}" style="background:linear-gradient(90deg,${d.colorA},${d.colorB});width:0%"></div></div></div>`).join('');
+  const rvs=d.mythic?`background:linear-gradient(90deg,${d.colorA},${d.colorB});-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;`:`color:${d.colorA};text-shadow:0 0 20px ${d.colorA}66;`;
+
+  document.getElementById('tm-body').innerHTML=`
+    <div class="tm-skill-banner" style="border-color:${sc}22;background:${sc}0d;">
+      <span class="tm-skill-emoji">${d.skillEmoji}</span>
+      <div><div class="tm-skill-tag" style="color:${sc};border-color:${sc}44;">${d.skillLabel}</div><div class="tm-skill-desc">${d.skillDesc}</div></div>
+    </div>
+    <div class="tm-sec" style="margin-top:1.2rem;">TIER POSITION</div>
+    <div class="tm-ladder">${ladder}<span class="tm-ladder-lbl" style="color:${d.colorA}">TIER ${d.tierPos} / 6</span></div>
+    <div class="tm-sec" style="margin-top:1.2rem;">SKILLS & TRAITS</div>
+    <div class="tm-traits">${traits}</div>
+    <div class="tm-sec">STAT OVERVIEW</div>
+    <div class="tm-stats">${bars}</div>
+    <div class="tm-sec" style="margin-top:1.2rem;">RANK RANGE</div>
+    <div class="tm-rank-box">
+      <div><div class="tm-rank-label">BEDROCK EDITION</div><div class="tm-rank-val" style="${rvs}">${d.rankRange}</div></div>
+      <div class="tm-rank-desc">${d.rankDesc}</div>
+    </div>`;
+
+  tmOverlay.classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>{document.querySelectorAll('.tm-bar-fill').forEach(b=>{b.style.transition='width .9s cubic-bezier(.22,1,.36,1)';b.style.width=b.dataset.w+'%';});},60);
+}
+function closeTM(){tmOverlay.classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.tier-card').forEach(c=>c.addEventListener('click',()=>openTM(c.dataset.tier)));
+document.getElementById('tm-close').addEventListener('click',closeTM);
+tmOverlay.addEventListener('click',e=>{if(e.target===tmOverlay)closeTM();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTM();});
+
+// ═══ TICKET SYSTEM ═══
+function getTickets(){return JSON.parse(localStorage.getItem('mf_tickets')||'[]');}
+function saveTickets(t){localStorage.setItem('mf_tickets',JSON.stringify(t));}
+
+function renderTickets(filter=''){
+  const list=document.getElementById('tickets-list');
+  let tickets=getTickets().reverse();
+  if(filter)tickets=tickets.filter(t=>
+    t.ign.toLowerCase().includes(filter.toLowerCase())||
+    t.tier.toLowerCase().includes(filter.toLowerCase())||
+    t.mode.toLowerCase().includes(filter.toLowerCase())||
+    t.submitter.toLowerCase().includes(filter.toLowerCase())
+  );
+  document.getElementById('tickets-count').textContent=tickets.length+' TICKET'+(tickets.length!==1?'S':'');
+  if(!tickets.length){list.innerHTML='<div class="tickets-empty">NO TICKETS FOUND ⚔</div>';return;}
+  list.innerHTML=tickets.map(t=>{
+    const d=new Date(t.time);
+    const ds=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="ticket-row">
+      <div class="ticket-row-id">${t.id}</div>
+      <div class="ticket-row-info">
+        <div class="ticket-row-ign">${t.ign}</div>
+        <div class="ticket-row-meta">${t.platform} · ${t.mode} · ${ds}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="ticket-row-tier">${t.tier}</div>
+        <div class="ticket-row-by">by <span>${t.submitter}</span></div>
+      </div>
+      <div class="ticket-status ${t.id.endsWith('1')||Math.random()>.5?'ts-open':'ts-pending'}">${Math.random()>.5?'OPEN':'PENDING'}</div>
+    </div>`;
+  }).join('');
+}
+renderTickets();
+document.getElementById('tickets-search').addEventListener('input',e=>renderTickets(e.target.value));
+
+// Apply form
+document.getElementById('a-reason').addEventListener('input',e=>{document.getElementById('a-char').textContent=e.target.value.length;});
+
+document.getElementById('apply-submit').addEventListener('click',()=>{
+  const ign=document.getElementById('a-ign').value.trim();
+  const tier=document.getElementById('a-tier').value;
+  const mode=document.getElementById('a-mode').value;
+  const reason=document.getElementById('a-reason').value.trim();
+  const platform=document.querySelector('input[name="apl"]:checked').value;
+  const discord=document.getElementById('a-discord').value.trim();
+  const submitter=visitorName||document.getElementById('a-submitter').value.trim()||'Anonymous';
+  const errEl=document.getElementById('apply-err');
+
+  if(!ign){errEl.textContent='⚠ Please enter your IGN.';return;}
+  if(!tier){errEl.textContent='⚠ Please select a tier.';return;}
+  if(!mode){errEl.textContent='⚠ Please select a game mode.';return;}
+  if(reason.length<10){errEl.textContent='⚠ Please write at least a brief reason (10+ chars).';return;}
+  errEl.textContent='';
+
+  const id='#TKT-'+Date.now().toString().slice(-5);
+  const ticket={id,ign,tier,mode,platform,reason,discord,submitter,time:Date.now()};
+  const tickets=getTickets();
+  tickets.push(ticket);
+  saveTickets(tickets);
+  renderTickets();
+
+  // Show success
+  const banner=document.getElementById('apply-banner');
+  document.getElementById('asb-id').textContent=id;
+  document.getElementById('asb-details').innerHTML=`<span class="asb-chip">IGN: ${ign}</span><span class="asb-chip">Tier: ${tier}</span><span class="asb-chip">Mode: ${mode}</span><span class="asb-chip">By: ${submitter}</span>`;
+  banner.classList.add('show');
+  banner.scrollIntoView({behavior:'smooth',block:'center'});
+
+  // Reset
+  document.getElementById('a-ign').value='';
+  document.getElementById('a-tier').value='';
+  document.getElementById('a-mode').value='';
+  document.getElementById('a-reason').value='';
+  document.getElementById('a-discord').value='';
+  document.getElementById('a-char').textContent='0';
+});
+
+document.getElementById('asb-close').addEventListener('click',()=>document.getElementById('apply-banner').classList.remove('show'));
+
+// Fill submitter field when name is set
+function updateSubmitterField(){if(visitorName)document.getElementById('a-submitter').value=visitorName;}
+updateSubmitterField();
+
+// Visitor count footer
+function updateVisitorCount(){
+  const visitors=JSON.parse(localStorage.getItem('mf_visitors')||'[]');
+  document.getElementById('visitor-count-footer').textContent=visitors.length;
+}
+updateVisitorCount();
+
+// ═══ LEADERBOARD SYSTEM ═══
+const TIER_ORDER={mythic:6,legend:5,elite:4,warrior:3,fighter:2,recruit:1};
+const TIER_ICONS={mythic:'✨',legend:'💎',elite:'🔥',warrior:'🛡️',fighter:'⚔️',recruit:'🌱'};
+const TIER_LABELS={mythic:'Mythic ✨',legend:'Legend 💎',elite:'Elite 🔥',warrior:'Warrior 🛡️',fighter:'Fighter ⚔️',recruit:'Recruit 🌱'};
+const TIERS_ORDER=['mythic','legend','elite','warrior','fighter','recruit'];
+
+function getLB(){return JSON.parse(localStorage.getItem('mf_leaderboard')||'[]');}
+function saveLB(d){localStorage.setItem('mf_leaderboard',JSON.stringify(d));}
+
+function renderLB(){
+  const all=getLB();
+  document.getElementById('lb-count').textContent=all.length+' PLAYER'+(all.length!==1?'S':'')+' RANKED';
+
+  TIERS_ORDER.forEach(tier=>{
+    const players=all.filter(p=>p.tier===tier).sort((a,b)=>b.score-a.score);
+    document.getElementById('lb-cnt-'+tier).textContent=players.length+' PLAYER'+(players.length!==1?'S':'');
+    const grid=document.getElementById('lb-grid-'+tier);
+    if(!players.length){
+      grid.innerHTML=`<div class="lb-empty-tier">NO ${tier.toUpperCase()} PLAYERS YET</div>`;
+      return;
+    }
+    grid.innerHTML=players.map((p,i)=>{
+      const posClass=i===0?'r1':i===1?'r2':i===2?'r3':'rn';
+      const posMedal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+      const d=new Date(p.time);
+      const ds=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+      const mythicBorder=tier==='mythic'?'<div class="lb-mythic-border"></div>':'';
+      return `<div class="lb-player-card lb-${tier}-card">
+        ${mythicBorder}
+        <div class="lb-card-top"></div>
+        <div class="lb-card-body">
+          <span class="lb-card-pos ${posClass}">${posMedal}</span>
+          <div class="lb-card-ign">${p.ign}</div>
+          <div class="lb-card-plat">${p.platform}</div>
+          <span class="lb-card-score">${p.score} PTS</span>
+          <div class="lb-card-mode">${p.mode}</div>
+          <div class="lb-card-date">${ds}</div>
+        </div>
+      </div>`;
+    }).join('');
+    // Re-add hover cursor
+    grid.querySelectorAll('.lb-player-card').forEach(el=>{
+      el.addEventListener('mouseenter',()=>document.body.classList.add('ch'));
+      el.addEventListener('mouseleave',()=>document.body.classList.remove('ch'));
+    });
+  });
+}
+
+renderLB();
+
+// Add player modal
+const lbAddOverlay=document.getElementById('lb-add-overlay');
+document.getElementById('lb-open-add').addEventListener('click',()=>{lbAddOverlay.classList.add('open');document.body.style.overflow='hidden';});
+document.getElementById('lb-add-close').addEventListener('click',()=>{lbAddOverlay.classList.remove('open');document.body.style.overflow='';});
+lbAddOverlay.addEventListener('click',e=>{if(e.target===lbAddOverlay){lbAddOverlay.classList.remove('open');document.body.style.overflow='';}});
+
+document.getElementById('lb-add-submit').addEventListener('click',()=>{
+  const ign=document.getElementById('lb-ign').value.trim();
+  const tier=document.getElementById('lb-tier').value;
+  const mode=document.getElementById('lb-mode').value;
+  const score=parseInt(document.getElementById('lb-score').value)||0;
+  const platform=document.querySelector('input[name="lb-apl"]:checked').value;
+  const errEl=document.getElementById('lb-add-err');
+  if(!ign){errEl.textContent='⚠ Enter a player IGN.';return;}
+  if(!tier){errEl.textContent='⚠ Select a tier.';return;}
+  if(!mode){errEl.textContent='⚠ Select a game mode.';return;}
+  if(score<1){errEl.textContent='⚠ Enter a valid score.';return;}
+  errEl.textContent='';
+  const lb=getLB();
+  lb.push({ign,tier,mode,platform,score,time:Date.now()});
+  saveLB(lb);
+  renderLB();
+  lbAddOverlay.classList.remove('open');
+  document.body.style.overflow='';
+  document.getElementById('lb-ign').value='';
+  document.getElementById('lb-tier').value='';
+  document.getElementById('lb-mode').value='';
+  document.getElementById('lb-score').value='';
+  document.getElementById('leaderboard').scrollIntoView({behavior:'smooth'});
+});
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&lbAddOverlay.classList.contains('open')){lbAddOverlay.classList.remove('open');document.body.style.overflow='';}});
+</script>
+</body>
+</html>
